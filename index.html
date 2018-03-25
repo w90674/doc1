@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>天气预报</title>
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="./css/index.css">
+</head>
+<body>
+<script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdn.bootcss.com/echarts/4.0.4/echarts.min.js"></script>
+<div class="contains" id="app" v-cloak>
+    <div class="top">
+        <input type="text" placeholder="请输入查询的城市" v-model="city">
+        <input type="button" value="查询">
+        <span>
+            当前城市为
+            <b>{{city}}</b>
+        </span>
+    </div>
+    <div class="middle clearFix">
+        <ul>
+            <li>
+                <h5>{{weatherInfo.week}}</h5>
+                <h6>{{weatherInfo.date}}</h6>
+                <img :src="weatherInfo.img | reformatUrl" alt="">
+                <p>
+                    <span>{{weatherInfo.templow}}</span>~
+                    <span>{{weatherInfo.temphigh}}℃</span>
+                </p>
+                <p><span>{{weatherInfo.temp}}℃</span><span>(实时)</span></p>
+                <p>{{weatherInfo.weather}}</p>
+                <p>
+                    <span>{{weatherInfo.winddirect}}</span>
+                    <span>{{weatherInfo.windpower}}</span>
+                    <span>{{weatherInfo.windspeed}}</span>
+                </p>
+            </li>
+            <li v-for="(item,index) in weatherInfo['daily']" v-if="index>0">
+                <h5>{{item.week}}</h5>
+                <h6>{{item.date}}</h6>
+                <img :src="item.day.img | reformatUrl" alt="">
+                <p>
+                    <span>{{item.day.templow}}</span>~
+                    <span>{{item.day.temphigh}}℃</span>
+                </p>
+                <p>{{item.day.weather}}</p>
+                <p>
+                    <span>{{item.day.winddirect}}</span>
+                    <span>{{item.day.windpower}}</span>
+                </p>
+            </li>
+        </ul>
+    </div>
+    <div class="bottom">
+        <div class="router-show">
+            <!-- 24h温度 -->
+            <div class="sort" style="display: block">
+                <div id="temp">
+
+                </div>
+            </div>
+            <!-- 暂无数据接口 待补充 -->
+            <div class="sort">
+                <div class="wind-speed">
+                    暂无接口数据
+                </div>
+            </div>
+            <!-- 暂无数据接口 待补充 -->
+            <div class="sort">
+                <div calss="wind-direct">
+                    暂无接口数据
+                </div>
+            </div>
+            <!-- 相关指数 -->
+            <ul class="index sort">
+                <li v-for="(idx,index) in weatherInfo.index" v-if="index<6" ref="isShow">
+                    <p>
+                        <span>{{idx.iname}}</span>
+                        <span>:</span>
+                        <span>{{idx.ivalue}}</span>
+                    </p>
+                    <span class="details" style="display: none">
+                    {{idx.detail}}
+                </span>
+                </li>
+            </ul>
+        </div>
+        <div class="nav-bottom">
+            <a href="##" class="select">24h温度</a>
+            <a href="##" class="aaa">风力</a>
+            <a href="##">风向</a>
+            <a href="##">相关指数</a>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    let myvue = new Vue({
+        el: '#app',
+        data(){
+            return {
+                days: ['1', '2', '3', '4', '5'],
+                weatherInfo: '',
+                city: '上海'
+            }
+        },
+        created(){
+            this.getData('上海');
+        },
+        methods: {
+            getData: function (city) {
+                axios.get('http://jisutqybmf.market.alicloudapi.com/weather/query', {
+                    headers: {Authorization: 'APPCODE 2b38e426e6f0463292bbee274126fb75'},
+                    params: {
+                        city: city
+                    }
+                }).then(res => {
+                    console.log(res.data);
+                    myvue.weatherInfo = res.data.result;
+                }).catch(e => console.log(e))
+            }
+        },
+        mounted(){
+            setTimeout(() => {
+                //相关指数信息:
+                $('.index li').hover(function () {
+                    $(this).find('.details').css({display: 'block'})
+                }, function () {
+                    $(this).find('.details').css({display: 'none'})
+                });
+
+                //图形可视化：
+
+                let myChart = echarts.init(document.getElementById('temp'));
+
+                reCanvas();
+                //temp -24h温度变化
+
+                function reCanvas() {
+                    let option1 = {
+                        tooltip: {
+                            trigger: 'axis'
+                        },
+                        color: ['#61a0a8'],
+                        textStyle: {
+                            color: '#fff',
+                            fontSize: 12,
+                            textHight: 16,
+                            fontWeight: 'light'
+                        },
+                        toolbox: {
+                            show: false,
+                            feature: {
+                                dataZoom: {
+                                    yAxisIndex: 'none'
+                                },
+                                dataView: {readOnly: true},
+                                magicType: {type: ['line', 'bar']},
+                                restore: {},
+                                saveAsImage: {}
+                            }
+                        },
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: []
+                        },
+                        yAxis: {
+                            type: 'value',
+                            minInterval: 2,
+                            splitNumber: 4,
+                            axisLabel: {
+                                formatter: '{value} °C'
+                            }
+                        },
+                        series: [
+                            {
+                                name: '气温',
+                                type: 'line',
+                                data: [],
+                                symbolSize: 8,
+                                markPoint: {
+                                    fontSize: 12,
+                                    symbolSize: 30,
+                                    data: [
+                                        {type: 'max', name: '最大值'},
+                                        {type: 'min', name: '最小值'}
+                                    ]
+                                },
+                            },
+
+                        ]
+                    };
+                    for (let i = 0; i < myvue.weatherInfo.hourly.length;) {
+                        option1.series[0].data.push(myvue.weatherInfo.hourly[i].temp);
+                        option1.xAxis.data.push(myvue.weatherInfo.hourly[i].time);
+                        i += 2;
+                    }
+                    myChart.setOption(option1);
+                }
+
+                //选项卡：
+                $('.nav-bottom a').click(function () {
+                    let index = $(this).index();
+                    $(this).addClass('select').siblings().removeClass('select');
+                    $('.bottom .sort').eq(index).css({display: 'block'})
+                        .siblings('.sort').css({display: 'none'})
+                });
+
+                //查询：
+                $('.top input:eq(1)').click(function () {
+                    myvue.getData($('.top input:eq(0)').val());
+                    reCanvas();
+                })
+            }, 1000)
+
+        },
+        filters: {
+            reformatUrl(val){
+                return `./img/${val}.png`
+            }
+        }
+    }).$mount('#app');
+
+
+</script>
+</body>
+</html>
