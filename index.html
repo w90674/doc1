@@ -7,10 +7,10 @@
     <link rel="stylesheet" href="./css/index.css">
 </head>
 <body>
-<script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script src="https://cdn.bootcss.com/echarts/4.0.4/echarts.min.js"></script>
+<script src="./js/jquery.min.js"></script>
+<script src="./js/vue.min.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/echarts.min.js"></script>
 <div class="contains" id="app" v-cloak>
     <div class="top">
         <input type="text" placeholder="请输入查询的城市" v-model="city">
@@ -118,7 +118,6 @@
                         city: city
                     }
                 }).then(res => {
-                    console.log(res.data);
                     myvue.weatherInfo = res.data.result;
                 }).catch(e => console.log(e))
             }
